@@ -3,6 +3,7 @@
 
 
 #define OPEN_ERROR "This file could not open: %s"
+#define CONFIG_NAME_SIZE 1024
 #define OPTION_COUNT_IN_SECTION 1024
 #define OPTION_TITLE_SIZE 1024
 #define OPTION_VALUE_SIZE 1024
@@ -18,7 +19,7 @@ struct ConfigOption
 
 struct ConfigSection
 {
-    char* name;
+    char name[CONFIG_NAME_SIZE];
     config_option* options[OPTION_COUNT_IN_SECTION];
     config_section* next_section;
 };
@@ -84,14 +85,36 @@ char* get_config_option_value(config_option* op)
 //     }
 // }
 
-// static config_section* create_config_section(char* line)
-// {
-//     for(int i=0;i<OPTION_COUNT_IN_SECTION;i++)
-//     {
+static config_section* create_config_sections(FILE* f)
+{
+    int is_eof = 0;
+    config_section result = (config_section*)malloc(sizeof(config_section));
+    config_section* current_config_section;
+    strncpy(result.name, "DEFAULT", sizeof("DEFAULT"));
+    while(!is_eof)
+    {
+        char buf[OPTION_BUFFER_SIZE];
+        switch(config_line_read(f, &buf))
+        {
+            case CLN_EOF:
+                break;
+            
+            case CLN_COMMENT:
+                break;
 
-//     }
+            case CLN_SECTION_TITLE:
+                break;
+            
+            case CLN_OPTION:
+                break;
+
+            default:
+                break;
+        }
+
+    }
         
-// }
+}
 
 static config_option* create_config_option(char* line)
 {
