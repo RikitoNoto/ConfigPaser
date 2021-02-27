@@ -3,8 +3,8 @@
 
 
 #define OPEN_ERROR "This file could not open: %s"
+#define DEFAULT_SECTION_NAME "DEFAULT"
 #define CONFIG_NAME_SIZE 1024
-#define OPTION_COUNT_IN_SECTION 1024
 #define OPTION_TITLE_SIZE 1024
 #define OPTION_VALUE_SIZE 1024
 #define OPTION_BUFFER_SIZE 2048
@@ -15,12 +15,13 @@ struct ConfigOption
 {
     char title[OPTION_TITLE_SIZE];
     char value[OPTION_VALUE_SIZE];
+    config_option* next_option;
 };
 
 struct ConfigSection
 {
     char name[CONFIG_NAME_SIZE];
-    config_option* options[OPTION_COUNT_IN_SECTION];
+    config_option* options;
     config_section* next_section;
 };
 
@@ -88,24 +89,40 @@ char* get_config_option_value(config_option* op)
 static config_section* create_config_sections(FILE* f)
 {
     int is_eof = 0;
-    config_section result = (config_section*)malloc(sizeof(config_section));
-    config_section* current_config_section;
-    strncpy(result.name, "DEFAULT", sizeof("DEFAULT"));
+    config_section* result = (config_section*)malloc(sizeof(config_section));
+    config_section* current_config_section = result;
+    config_option* current_config_option = NULL;
+    strncpy(result->name, DEFAULT_SECTION_NAME, sizeof(DEFAULT_SECTION_NAME)+1);
     while(!is_eof)
     {
         char buf[OPTION_BUFFER_SIZE];
         switch(config_line_read(f, &buf))
         {
             case CLN_EOF:
+                is_eof = 1;
+                current_config_section->next_section = NULL;
                 break;
             
             case CLN_COMMENT:
                 break;
 
-            case CLN_SECTION_TITLE:
+            case CLN_SECTION_TITLE://add title
+                current_config_section->next_section = (config_section*)malloc(sizeof(config_section));
+                if(current_config_section->options != NULL) current_config_section->options->next_option = NULL;
+                current_config_section = current_config_section->next_section;
                 break;
             
             case CLN_OPTION:
+                if(current_config_option == NULL)
+                {
+                    current_config_section->options = create_config_option(buf);
+                    current_config_option = current_config_section->options;
+                }
+                else
+                {
+                    current_config_option->next_option = create_config_option(buf);
+                    current_config_option = current_config_option->next_option;
+                }
                 break;
 
             default:
@@ -114,6 +131,39 @@ static config_section* create_config_sections(FILE* f)
 
     }
         
+}
+
+static char* create_config_section_title(char* line)
+{
+    char* start_point;
+    char* title = (char*)malloc(OPTION_BUFFER_SIZE);
+
+    line = delete_indent(line);
+    
+    for(int i = 0; i < OPTION_BUFFER_SIZE; i++)
+    {
+        if(line[i]=='[')
+        {
+            start_point = &(line[i]);
+        }
+        else if(line[i]==']')
+        {
+            line[i] = '\0';
+            break;
+        }
+        else if(line[i]=='\0')
+        {
+            raise_error("Title context is failed.");
+        }
+
+        if(i==(OPTION_BUFFER_SIZE-1))
+        {
+            raise_error("Title context is too long.");
+        }
+    }
+
+    strncpy(title, start_point, OPTION_BUFFER_SIZE);
+    return title;
 }
 
 static config_option* create_config_option(char* line)
@@ -199,8 +249,6 @@ static char* delete_indent(char* line)
     {
         if(line[i]==' '||line[i]=='\t')
         {
-            printf("called\n");
-            printf("%s\n", line);
             buffer++;
         }
     }
