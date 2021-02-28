@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 FILE* test_file_open(char* filenames);
-int config_line_read_test(FILE* f, int correct);
-int create_config_option_test(char* line);
+int config_line_read_test(FILE* f);
+void create_config_option_test(char* line);
+void create_config_section_test(char* filename);
+void print_config_sections(config_section* section);
 #endif

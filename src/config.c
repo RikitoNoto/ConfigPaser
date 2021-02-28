@@ -1,15 +1,16 @@
+
+#define CONFIG_STATIC 1
 #include "config.h"
 
 
 
 #define OPEN_ERROR "This file could not open: %s"
-#define DEFAULT_SECTION_NAME "DEFAULT"
+#define DEFAULT_SECTION_TITLE "DEFAULT"
 #define CONFIG_NAME_SIZE 1024
 #define OPTION_TITLE_SIZE 1024
 #define OPTION_VALUE_SIZE 1024
 #define OPTION_BUFFER_SIZE 2048
 
-enum ConfigLineNumber {CLN_EOF, CLN_COMMENT, CLN_SECTION_TITLE, CLN_OPTION};
 
 struct ConfigOption
 {
@@ -20,16 +21,19 @@ struct ConfigOption
 
 struct ConfigSection
 {
-    char name[CONFIG_NAME_SIZE];
+    char title[CONFIG_NAME_SIZE];
     config_option* options;
     config_section* next_section;
 };
 
+/*================================================================
+    For Test
+==================================================================*/
 #if (TEST_MODE == 1)
 
-int _config_line_read(FILE* f, char* buf)
+int _config_line_read(FILE* f, char* buf, int maxcount)
 {
-    return  config_line_read(f, buf);
+    return  config_line_read(f, buf, maxcount);
 }
 
 config_option* _create_config_option(char* line)
@@ -37,12 +41,50 @@ config_option* _create_config_option(char* line)
     return create_config_option(line);
 }
 
-// config_section* _create_config_section(char* line)
-// {
-//     create_config_section(line);
-// }
+config_section* _create_config_sections(FILE* f)
+{
+    return create_config_sections(f);
+}
 
 #endif
+/*================================================================
+==================================================================*/
+
+/*================================================================
+    Accessor
+==================================================================*/
+char* get_config_section_title(config_section* section)
+{
+    return section->title;
+}
+
+config_option* get_config_section_options(config_section* section)
+{
+    return section->options;
+}
+
+config_section* get_next_config_section(config_section* section)
+{
+    return section->next_section;
+}
+
+char* get_config_option_title(config_option* op)
+{
+    return op->title;
+}
+
+char* get_config_option_value(config_option* op)
+{
+    return op->value;
+}
+
+config_option* get_next_config_option(config_option* op)
+{
+    return op->next_option;
+}
+
+/*================================================================
+==================================================================*/
 
 // config_section* read_config_file(const char* filename)
 // {
@@ -62,57 +104,37 @@ config_option* _create_config_option(char* line)
 //     return config;
 // }
 
-char* get_config_option_title(config_option* op)
-{
-    return op->title;
-}
-
-char* get_config_option_value(config_option* op)
-{
-    return op->value;
-}
-
-// static config_section* create_config_sections(FILE* f)
-// {
-//     config_section section;
-//     for(;;)
-//     {
-//         char* buf[OPTION_BUFFER_SIZE];
-//         fgets(buf, sizeof(buf), f);
-//         if(buf == NULL) break;
-//         if(buf[0]==';') continue;
-
-
-//     }
-// }
-
 static config_section* create_config_sections(FILE* f)
 {
     int is_eof = 0;
     config_section* result = (config_section*)malloc(sizeof(config_section));
     config_section* current_config_section = result;
     config_option* current_config_option = NULL;
-    strncpy(result->name, DEFAULT_SECTION_NAME, sizeof(DEFAULT_SECTION_NAME)+1);
+    strncpy(result->title, DEFAULT_SECTION_TITLE, sizeof(DEFAULT_SECTION_TITLE)+1);
     while(!is_eof)
     {
         char buf[OPTION_BUFFER_SIZE];
-        switch(config_line_read(f, &buf))
+        switch(config_line_read(f, buf, sizeof(buf)))
         {
-            case CLN_EOF:
+            case CLK_EOF:
+                printf("eof\n");
                 is_eof = 1;
                 current_config_section->next_section = NULL;
                 break;
             
-            case CLN_COMMENT:
+            case CLK_COMMENT:
+                printf("comment\n");
                 break;
 
-            case CLN_SECTION_TITLE://add title
+            case CLK_SECTION_TITLE:
+                printf("section title\n");
                 current_config_section->next_section = (config_section*)malloc(sizeof(config_section));
                 if(current_config_section->options != NULL) current_config_section->options->next_option = NULL;
                 current_config_section = current_config_section->next_section;
                 break;
             
-            case CLN_OPTION:
+            case CLK_OPTION:
+                printf("option\n");
                 if(current_config_option == NULL)
                 {
                     current_config_section->options = create_config_option(buf);
@@ -131,6 +153,7 @@ static config_section* create_config_sections(FILE* f)
 
     }
         
+    return result;
 }
 
 static char* create_config_section_title(char* line)
@@ -193,6 +216,8 @@ static char* create_option_title(char* line, char* title)
     {
         if(i==OPTION_TITLE_SIZE)
         {
+            line[OPTION_TITLE_SIZE-1]='\0';
+            printf("%s", line);
             raise_error("Too long title or invalid title.");
         }
 
@@ -263,7 +288,7 @@ static void free_config_option(config_option* op)
     free(op);
 }
 
-static int config_line_read(FILE* f, char* buf)
+static int config_line_read(FILE* f, char* buf, int maxcount)
 {
     /*
     read a line from stream "f".
@@ -275,26 +300,24 @@ static int config_line_read(FILE* f, char* buf)
     3: option
     -1: error
     */
-    fgets(buf, sizeof(buf), f);
-    if(*buf==EOF) return CLN_EOF;
-    for(int i=0;i < sizeof(buf);i++)
+    if(fgets(buf, maxcount, f)==NULL) return CLK_EOF;
+    for(int i=0;i < maxcount;i++)
     {
-        printf("buf:%c", *buf);
         if(*buf == ' ' || *buf == '\t')
         {
-            buf += 1;
+            buf++;
         }
-        else if(*buf == ';'||*buf == '\n')
+        else if(*buf == ';'||*buf == '\n'||*buf == '\r')
         {
-            return CLN_COMMENT;
+            return CLK_COMMENT;
         }
         else if(*buf == '[')
         {
-            return CLN_SECTION_TITLE;
+            return CLK_SECTION_TITLE;
         }
         else
         {
-            return CLN_OPTION;
+            return CLK_OPTION;
         }
 
     }
@@ -305,5 +328,6 @@ static int config_line_read(FILE* f, char* buf)
 static void raise_error(char* message)
 {
     fprintf(stderr, "%s", message);
+    perror(NULL);
     exit(1);
 }
