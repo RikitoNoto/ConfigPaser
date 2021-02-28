@@ -46,6 +46,17 @@ config_section* _create_config_sections(FILE* f)
     return create_config_sections(f);
 }
 
+char* _delete_indent(char* line, int* delete_count)
+{
+    return delete_indent(line, delete_count);
+}
+
+char* _create_config_section_title(char* line)
+{
+    return create_config_section_title(line);
+}
+
+
 #endif
 /*================================================================
 ==================================================================*/
@@ -117,24 +128,21 @@ static config_section* create_config_sections(FILE* f)
         switch(config_line_read(f, buf, sizeof(buf)))
         {
             case CLK_EOF:
-                printf("eof\n");
                 is_eof = 1;
                 current_config_section->next_section = NULL;
                 break;
             
             case CLK_COMMENT:
-                printf("comment\n");
                 break;
 
             case CLK_SECTION_TITLE:
-                printf("section title\n");
                 current_config_section->next_section = (config_section*)malloc(sizeof(config_section));
                 if(current_config_section->options != NULL) current_config_section->options->next_option = NULL;
                 current_config_section = current_config_section->next_section;
+                strncpy(current_config_section->title, create_config_section_title(buf), CONFIG_NAME_SIZE); 
                 break;
             
             case CLK_OPTION:
-                printf("option\n");
                 if(current_config_option == NULL)
                 {
                     current_config_section->options = create_config_option(buf);
@@ -161,13 +169,11 @@ static char* create_config_section_title(char* line)
     char* start_point;
     char* title = (char*)malloc(OPTION_BUFFER_SIZE);
 
-    line = delete_indent(line);
-    
     for(int i = 0; i < OPTION_BUFFER_SIZE; i++)
     {
         if(line[i]=='[')
         {
-            start_point = &(line[i]);
+            start_point = &(line[i+1]);
         }
         else if(line[i]==']')
         {
@@ -205,7 +211,7 @@ static char* create_option_title(char* line, char* title)
     char* value_start_pointer;
     int is_double_quotation = 0;
     int is_equal_serch = 1;//For double quotation.
-    line = delete_indent(line);
+    // line = delete_indent(line, NULL);
     if(*line == '\"')
     {
         is_equal_serch = 0;
@@ -251,7 +257,7 @@ static char* create_option_title(char* line, char* title)
 
 static void create_option_value(char* value_start_pointer, char* value)
 {
-    value_start_pointer = delete_indent(value_start_pointer);
+    value_start_pointer = delete_indent(value_start_pointer, NULL);
     if(*value_start_pointer == '\"')
     {
         value_start_pointer++;
@@ -267,7 +273,7 @@ static void create_option_value(char* value_start_pointer, char* value)
     strncpy(value, value_start_pointer, OPTION_VALUE_SIZE);
 }
 
-static char* delete_indent(char* line)
+static char* delete_indent(char* line, int* delete_count)
 {
     int buffer=0;
     for(int i=0;i<sizeof(line);i++)
@@ -278,6 +284,7 @@ static char* delete_indent(char* line)
         }
     }
     line+=buffer;
+    if(delete_count != NULL) *delete_count = buffer;
     return line;
 }
 

@@ -8,10 +8,14 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Usage: give a string of a line.\n");
         exit(1);
     }
-    printf("=====line read test=====\n");
-    config_line_read_test(test_file_open("test.ini"));
-    // printf("=====config section test=====\n");
-    // create_config_section_test(argv[1]);
+    // printf("=====delete indent test=====\n");
+    // delete_indent_test(argv[1]);
+    // printf("=====create config section title test=====\n");
+    // create_config_section_title(argv[1]);
+    // printf("=====line read test=====\n");
+    // config_line_read_test(test_file_open("test.ini"));
+    printf("=====config section test=====\n");
+    create_config_section_test(argv[1]);
 
 }
 
@@ -84,14 +88,29 @@ void print_config_sections(config_section* section)
     {
         if(current_config_section == NULL) break;
         config_option* current_option = get_config_section_options(current_config_section);
-        printf("SectionTitle: %s\n", get_config_section_title(current_config_section));
-        printf("Options:\n");
+        printf("<SectionTitle: %s>\n", get_config_section_title(current_config_section));
+        printf("<Options>\n");
         while(1)
         {
             if(current_option== NULL) break;
-            printf("%s: %s", get_config_option_title(current_option), get_config_option_value(current_option));
+            printf("\t%s: %s", get_config_option_title(current_option), get_config_option_value(current_option));
+            current_option = get_next_config_option(current_option);
         }
 
         current_config_section = get_next_config_section(current_config_section);
     }
+}
+
+void create_config_section_title(char* line)
+{
+    printf("%s\n",_create_config_section_title(line));
+}
+
+void delete_indent_test(char* line)
+{
+    printf("receve string:\n%s\n", line);
+    int count;
+    line = _delete_indent(line, &count);
+    printf("indent deleted:\n%s\n",line);
+    printf("delete charactors count:%d\n", count);
 }

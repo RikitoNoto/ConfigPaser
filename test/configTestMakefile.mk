@@ -1,4 +1,4 @@
-configTest: config_test.o config.o
+configTest: config_test.o config_debug.o
 	gcc -Wall -g -o ../bin/configTest ../bin/config_test.o ../bin/config.o
 
 config_test.o: config_test.c

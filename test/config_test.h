@@ -10,4 +10,6 @@ int config_line_read_test(FILE* f);
 void create_config_option_test(char* line);
 void create_config_section_test(char* filename);
 void print_config_sections(config_section* section);
+void create_config_section_title(char* line);
+void delete_indent_test(char* line);
 #endif
