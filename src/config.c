@@ -131,17 +131,18 @@ static config_section* create_config_sections(FILE* f)
                 is_eof = 1;
                 current_config_section->next_section = NULL;
                 break;
-            
+
             case CLK_COMMENT:
                 break;
 
             case CLK_SECTION_TITLE:
                 current_config_section->next_section = (config_section*)malloc(sizeof(config_section));
-                if(current_config_section->options != NULL) current_config_section->options->next_option = NULL;
+                if(current_config_section->options != NULL) current_config_option->next_option = NULL;
+                current_config_option = NULL;
                 current_config_section = current_config_section->next_section;
                 strncpy(current_config_section->title, create_config_section_title(buf), CONFIG_NAME_SIZE); 
                 break;
-            
+
             case CLK_OPTION:
                 if(current_config_option == NULL)
                 {
@@ -160,7 +161,7 @@ static config_section* create_config_sections(FILE* f)
         }
 
     }
-        
+
     return result;
 }
 
@@ -173,7 +174,7 @@ static char* create_config_section_title(char* line)
     {
         if(line[i]=='[')
         {
-            start_point = &(line[i+1]);
+            start_point = line + 1;
         }
         else if(line[i]==']')
         {
