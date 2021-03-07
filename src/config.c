@@ -46,14 +46,19 @@ config_section* _create_config_sections(FILE* f)
     return create_config_sections(f);
 }
 
-char* _delete_indent(char* line, int* delete_count)
+char* _delete_indent(char* line, int* delete_count, int loop_count)
 {
-    return delete_indent(line, delete_count);
+    return delete_indent(line, delete_count, loop_count);
 }
 
 char* _create_config_section_title(char* line)
 {
     return create_config_section_title(line);
+}
+
+char* _create_option_title(char* line, char* title)
+{
+    return create_option_title(line, title);
 }
 
 
@@ -167,21 +172,21 @@ static config_section* create_config_sections(FILE* f)
 
 static char* create_config_section_title(char* line)
 {
-    char* start_point;
     char* title = (char*)malloc(OPTION_BUFFER_SIZE);
+    strncpy(title, line, OPTION_BUFFER_SIZE);
 
     for(int i = 0; i < OPTION_BUFFER_SIZE; i++)
     {
-        if(line[i]=='[')
+        if(title[i]=='[')
         {
-            start_point = line + 1;
+            title = title + i + 1;
         }
-        else if(line[i]==']')
+        else if(title[i]==']')
         {
-            line[i] = '\0';
+            title[i] = '\0';
             break;
         }
-        else if(line[i]=='\0')
+        else if(title[i]=='\0')
         {
             raise_error("Title context is failed.");
         }
@@ -192,7 +197,6 @@ static char* create_config_section_title(char* line)
         }
     }
 
-    strncpy(title, start_point, OPTION_BUFFER_SIZE);
     return title;
 }
 
@@ -212,7 +216,8 @@ static char* create_option_title(char* line, char* title)
     char* value_start_pointer;
     int is_double_quotation = 0;
     int is_equal_serch = 1;//For double quotation.
-    // line = delete_indent(line, NULL);
+    line = delete_indent(line, NULL, OPTION_TITLE_SIZE);
+    
     if(*line == '\"')
     {
         is_equal_serch = 0;
@@ -244,7 +249,7 @@ static char* create_option_title(char* line, char* title)
                 value_start_pointer = &(line[i+1]);
                 break;
             }
-            else if(line[i]==' ')
+            else if(line[i]==' ')//this
             {
                 line[i] = '\0';
             }
@@ -258,7 +263,7 @@ static char* create_option_title(char* line, char* title)
 
 static void create_option_value(char* value_start_pointer, char* value)
 {
-    value_start_pointer = delete_indent(value_start_pointer, NULL);
+    value_start_pointer = delete_indent(value_start_pointer, NULL, OPTION_VALUE_SIZE);
     if(*value_start_pointer == '\"')
     {
         value_start_pointer++;
@@ -274,15 +279,13 @@ static void create_option_value(char* value_start_pointer, char* value)
     strncpy(value, value_start_pointer, OPTION_VALUE_SIZE);
 }
 
-static char* delete_indent(char* line, int* delete_count)
+static char* delete_indent(char* line, int* delete_count, int loop_count)
 {
     int buffer=0;
-    for(int i=0;i<sizeof(line);i++)
+    for(int i=0;i<loop_count;i++)
     {
-        if(line[i]==' '||line[i]=='\t')
-        {
-            buffer++;
-        }
+        if(line[i]==' '||line[i]=='\t') buffer++;
+        else break;
     }
     line+=buffer;
     if(delete_count != NULL) *delete_count = buffer;

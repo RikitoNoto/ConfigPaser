@@ -25,8 +25,9 @@ enum ConfigLineKind {CLK_EOF, CLK_COMMENT, CLK_SECTION_TITLE, CLK_OPTION};
 int _config_line_read(FILE* f, char* buf, int maxcount);
 config_option* _create_config_option(char* line);
 config_section* _create_config_sections(FILE* f);
-char* _delete_indent(char* line, int* delete_count);
+char* _delete_indent(char* line, int* delete_count, int loop_count);
 char* _create_config_section_title(char* line);
+char* _create_option_title(char* line, char* title);
 
 #endif
 
@@ -54,7 +55,7 @@ static char* create_option_title(char* line, char* title);
 static void create_option_value(char* value_start_pointer, char* value);
 //=====================================
 
-static char* delete_indent(char* line, int* delete_count);
+static char* delete_indent(char* line, int* delete_count, int loop_count);
 static int config_line_read(FILE* f, char* buf, int maxcount);
 
 static void free_config_option(config_option* op);
