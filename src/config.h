@@ -40,8 +40,10 @@ config_section* get_next_config_section(config_section* section);
 char* get_config_option_title(config_option* op);
 char* get_config_option_value(config_option* op);
 config_option* get_next_config_option(config_option* op);
+void free_config_section(config_section* section);
 
 #if(CONFIG_STATIC == 1)
+
 
 //=======config section functions=======
 static char* create_config_section_title(char* line);

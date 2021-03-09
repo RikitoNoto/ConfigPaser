@@ -16,9 +16,17 @@ int main(int argc, char* argv[])
     // create_config_option_title_test(argv[1]);
     // printf("=====line read test=====\n");
     // config_line_read_test(test_file_open("test.ini"));
-    printf("=====config section test=====\n");
-    create_config_section_test(argv[1]);
+    // printf("=====config section test=====\n");
+    // create_config_section_test(argv[1]);
+    printf("=====read test=====\n");
+    config_read_test(argv[1]);
 
+
+}
+
+void config_read_test(char* filename)
+{
+    print_config_sections(read_config_file(filename));
 }
 
 FILE* test_file_open(char* filenames)
@@ -68,7 +76,7 @@ int config_line_read_test(FILE* f)
 void create_config_option_test(char* line)
 {
     config_option *op;
-    op = malloc(sizeof(op));
+    op = (config_option*)malloc(sizeof(op));
     op = _create_config_option(line);
     printf("title:%s\n", get_config_option_title(op));
     printf("value:%s\n", get_config_option_value(op));

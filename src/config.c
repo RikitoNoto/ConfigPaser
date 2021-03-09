@@ -1,4 +1,12 @@
 
+/**
+* @file config.c
+* @brief This file is for read ini file.
+* @author RikitoNoto
+* @date 2021/03/07
+* @details
+* This file is for read and write ini file.
+*/
 #define CONFIG_STATIC 1
 #include "config.h"
 
@@ -102,24 +110,42 @@ config_option* get_next_config_option(config_option* op)
 /*================================================================
 ==================================================================*/
 
-// config_section* read_config_file(const char* filename)
-// {
-//     FILE *f;
-//     config_section* config;
-//     f = fopen(filename, "r");
-//     if(!f)
-//     {
-//         char* message;
-//         sprintf(message,OPEN_ERROR, filename);
-//         raise_error(message);
-//     }
-//     // config = create_config_sections(f);
+/**
+* @brief read config file and return config_section structure.
+* @param[in] filename Path of config file.
+* @return Config sections infomation. This value is a chain structure.
+* @details
+* This function read ini file.
+* After read, call create_config_section function.
+* Retun value is chain structure, that structure allow you to access another section by next_section member. 
+* if fail opening file, call raise_error function with OPEN_ERROR message.
+*/
+config_section* read_config_file(const char* filename)
+{
+    FILE *f;
+    config_section* config;
 
+    f = fopen(filename, "r");//file open.
+    if(!f)
+    {
+        char* message = (char*)malloc(1024);
+        sprintf(message,OPEN_ERROR, filename);
+        raise_error(message);//call raise_error function with OPEN_ERROR message.
+    }
 
-//     fclose(f);
-//     return config;
-// }
+    config = create_config_sections(f);//call section create function.
 
+    fclose(f);//file close.
+    return config;
+}
+
+/**
+* @brief create config_section structure.
+* @param[in] f FILE stream object of read ini file.
+* @return config_section structure. That is the infomation of sections of receive ini file.
+* @details
+* This function read a receive file and create config_section structure.
+*/
 static config_section* create_config_sections(FILE* f)
 {
     int is_eof = 0;
@@ -249,7 +275,7 @@ static char* create_option_title(char* line, char* title)
                 value_start_pointer = &(line[i+1]);
                 break;
             }
-            else if(line[i]==' ')//this
+            else if(line[i]==' ')
             {
                 line[i] = '\0';
             }
@@ -292,30 +318,62 @@ static char* delete_indent(char* line, int* delete_count, int loop_count)
     return line;
 }
 
-static void free_config_option(config_option* op)
+void free_config_section(config_section* section)
 {
-    free(op->title);
-    free(op->value);
-    free(op);
+    config_section* current_config_section;
+    config_section* free_sec;
+    current_config_section = section;
+    while(1)
+    {
+        if(current_config_section == NULL) break;
+        free_sec = current_config_section;
+        current_config_section = free_sec->next_section;
+        free(free_sec->title);
+        free_config_option(free_sec->options);
+        free(free_sec);
+    }
 }
 
+static void free_config_option(config_option* op)
+{
+    config_option* current_config_option;
+    config_option* free_op;
+    current_config_option = op;
+    while(1)
+    {
+        if(current_config_option == NULL) break;
+        free_op = current_config_option;
+        current_config_option = free_op->next_option;
+        free(free_op->title);
+        free(free_op->value);
+        free(free_op);
+    }
+}
+
+
+/**
+* @brief read a line and return this line infomation, store a line in buf.
+* @param[in] f file stream to read.
+* @param[out] buf buffer to store a line.
+* @param[in] maxcount max character count of read file.
+* @return Kind of line infomation.return integer value in ConfigLineKind.
+* @details
+* This function read a line in file stream.
+* A line of read is start from
+*     '['          -> return "title" value.
+*     ';','\n','\r'-> return "comment" value.
+*     EOF          -> return "EOF" value.
+*     other        -> return "option" value.
+* If occuered error, return -1.
+*/
 static int config_line_read(FILE* f, char* buf, int maxcount)
 {
-    /*
-    read a line from stream "f".
-    read line is inserted buf.
-    return value is a number of kind of line.
-    0: EOF
-    1: comment
-    2: section title
-    3: option
-    -1: error
-    */
-    if(fgets(buf, maxcount, f)==NULL) return CLK_EOF;
-    for(int i=0;i < maxcount;i++)
+    if(fgets(buf, maxcount, f)==NULL) return CLK_EOF;//read a line. if EOF return EOF.
+    for(int i=0;i < maxcount;i++)//loop until maxcount.
     {
         if(*buf == ' ' || *buf == '\t')
         {
+            //if first character of a line is space or tab, move first position to next.
             buf++;
         }
         else if(*buf == ';'||*buf == '\n'||*buf == '\r')

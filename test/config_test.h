@@ -5,6 +5,7 @@
 #include "../src/config.h"
 #include <stdio.h>
 #include <stdlib.h>
+void config_read_test(char* filename);
 FILE* test_file_open(char* filenames);
 int config_line_read_test(FILE* f);
 void create_config_option_test(char* line);
