@@ -1,0 +1,2 @@
+configPaser.a:
+	gcc -Wall -o ../bin/configPaser.a ../src/config.c
