@@ -1,1 +1,4 @@
 /bin/*
+/doc/Doxyfile
+/doc/html/*
+/doc/latex/*

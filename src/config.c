@@ -196,6 +196,15 @@ static config_section* create_config_sections(FILE* f)
     return result;
 }
 
+
+/**
+* @brief create the title from a line for a config section struct.
+* @param[in] line a section line surrounded '[]' of a ini file.
+* @return the title.
+* @details
+* take out title surrounded '[]'.
+* ignore indents and spaces before '['.
+*/
 static char* create_config_section_title(char* line)
 {
     char* title = (char*)malloc(OPTION_BUFFER_SIZE);
@@ -226,6 +235,16 @@ static char* create_config_section_title(char* line)
     return title;
 }
 
+
+/**
+* @brief create a config option struct.
+* @param[in] line a option line of a ini file.
+* @return a config option struct.
+* @details
+* create config option struct.
+* this function allocate memory for option struct,
+* so there is a need free memory through free_config_option function.
+*/
 static config_option* create_config_option(char* line)
 {
     config_option *op;
@@ -237,6 +256,15 @@ static config_option* create_config_option(char* line)
     return op;
 }
 
+/**
+* @brief create the title from a line for a config option struct.
+* @param[in] line a option line of a ini file.
+* @param[out] title the title of a option read from a line.
+* @return a point to start of option value.
+* @details
+* read a line and create title,
+* after return a pointer to start of option value.
+*/
 static char* create_option_title(char* line, char* title)
 {
     char* value_start_pointer;
@@ -287,6 +315,14 @@ static char* create_option_title(char* line, char* title)
     return value_start_pointer;
 }
 
+/**
+* @brief create the value from a line for a config option struct.
+* @param[in] value_start_pointer point to start of value in a line.
+* @param[out] value the value of an option read from a line.
+* @return void.
+* @details
+* read a line and create value.
+*/
 static void create_option_value(char* value_start_pointer, char* value)
 {
     value_start_pointer = delete_indent(value_start_pointer, NULL, OPTION_VALUE_SIZE);
@@ -305,6 +341,15 @@ static void create_option_value(char* value_start_pointer, char* value)
     strncpy(value, value_start_pointer, OPTION_VALUE_SIZE);
 }
 
+/**
+* @brief delete indents and spaces from first in a line.
+* @param[in] line a line to delete indents and spaces.
+* @param[out] delete_count count of characters deleted.
+* @param[in] loop_count max count of loop.
+* @return start point other characters.
+* @details
+* delete indents and spaces from first in a line until other characters.
+*/
 static char* delete_indent(char* line, int* delete_count, int loop_count)
 {
     int buffer=0;
@@ -318,6 +363,14 @@ static char* delete_indent(char* line, int* delete_count, int loop_count)
     return line;
 }
 
+/**
+* @brief free a config section struct.
+* @param[in] section config section struct.
+* @return void
+* @details
+* free a config section struct.
+* that time this function call a function for free a config option struct.
+*/
 void free_config_section(config_section* section)
 {
     config_section* current_config_section;
@@ -334,6 +387,13 @@ void free_config_section(config_section* section)
     }
 }
 
+/**
+* @brief free a config option struct.
+* @param[in] op config option struct.
+* @return void
+* @details
+* free a config option struct.
+*/
 static void free_config_option(config_option* op)
 {
     config_option* current_config_option;
@@ -394,6 +454,13 @@ static int config_line_read(FILE* f, char* buf, int maxcount)
 
 }
 
+/**
+* @brief raise an error with out a message on the stderr.
+* @param[in] message message for out on the stderr.
+* @return void
+* @details
+* out message on the stderr, and exit this process.
+*/
 static void raise_error(char* message)
 {
     fprintf(stderr, "%s", message);
